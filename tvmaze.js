@@ -12,6 +12,7 @@ const $searchForm = $('#searchForm');
 */
 async function getShowsByTerm (searchTerm) {
   //get request to API, query search term
+  //TODO move api url into global space
   let response = await axios.get('http://api.tvmaze.com/search/shows', {params: { q: searchTerm }});
 
   console.log('response', response);
@@ -19,7 +20,9 @@ async function getShowsByTerm (searchTerm) {
   //passing an array of episode objs, returns an array of reformatted episode objs
   const episodes = response.data.map(formatEpisode);
 
-  /** takes in an episode obj and returns a formatted obj with only id, name, summary, and img properties */
+  /** takes in an episode obj and returns a formatted obj 
+   * with only id, name, summary, and img properties 
+  */
   function formatEpisode (episode) {
     let id = episode.show.id;
     let name = episode.show.name;
