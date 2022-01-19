@@ -3,32 +3,38 @@
 const $showsList = $('#showsList');
 const $episodesArea = $('#episodesArea');
 const $searchForm = $('#searchForm');
+const BASE_URL = 'http://api.tvmaze.com';
 
 /** Given a search term, search for tv shows that match that query.
  *
  *  Returns (promise) array of show objects: [show, show, ...].
  *  Each show object should contain exactly: {id, name, summary, image}
  *  (if no image URL given by API, put in a default image URL)
-*/
+ */
 async function getShowsByTerm (searchTerm) {
   //get request to API, query search term
   //TODO move api url into global space
-  let response = await axios.get('http://api.tvmaze.com/search/shows', {params: { q: searchTerm }});
+  let response = await axios.get(`${BASE_URL}/search/shows`, {
+    params: { q: searchTerm }
+  });
 
   console.log('response', response);
 
   //passing an array of episode objs, returns an array of reformatted episode objs
-  const episodes = response.data.map(formatEpisode);
+  const episodes = response.data.map(_formatEpisode);
 
-  /** takes in an episode obj and returns a formatted obj 
-   * with only id, name, summary, and img properties 
-  */
-  function formatEpisode (episode) {
+  /** takes in an episode obj and returns a formatted obj
+   * with only id, name, summary, and img properties
+   */
+  function _formatEpisode (episode) {
     let id = episode.show.id;
     let name = episode.show.name;
     let summary = episode.show.summary;
-    let placeholderImg = "https://tinyurl.com/tv-missing";
-    let image = episode.show.image === null ? placeholderImg : episode.show.image.original;
+    let placeholderImg = 'https://tinyurl.com/tv-missing';
+    let image =
+      episode.show.image === null
+        ? placeholderImg
+        : episode.show.image.original;
 
     return { id, name, summary, image };
   }
@@ -67,7 +73,7 @@ function populateShows (shows) {
 
 /** Handle search form submission: get shows from API and display.
  *  Hide episodes area (that only gets shown if they ask for episodes)
-*/
+ */
 async function searchForShowAndDisplay () {
   const term = $('#searchForm-term').val();
   const shows = await getShowsByTerm(term);
@@ -85,8 +91,27 @@ $searchForm.on('submit', async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow (id) {
+  const epsResponse = await axios.get(`${BASE_URL}/shows/${id}/episodes`);
+
+  //passing an array of episode objs, returns an array of reformatted episode objs
+  const episodes = epsResponse.data.map(_formatEpisode);
+
+  /** takes in an episode obj and returns a formatted obj
+   * with only id, name, summary, and img properties
+   */
+  function _formatEpisode (episode) {
+    let id = episode.id;
+    let name = episode.name;
+    let season = episode.season;
+    let number = episode.number;
+
+    return { id, name, season, number };
+  }
+
+  return episodes;
+}
 
 /** Write a clear docstring for this function... */
 
-// function populateEpisodes(episodes) { }
+function populateEpisodes (episodes) {}
