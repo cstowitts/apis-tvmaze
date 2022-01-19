@@ -7,24 +7,25 @@ const $searchForm = $('#searchForm');
 /** Given a search term, search for tv shows that match that query.
  *
  *  Returns (promise) array of show objects: [show, show, ...].
- *    Each show object should contain exactly: {id, name, summary, image}
- *    (if no image URL given by API, put in a default image URL)
- */
-
+ *  Each show object should contain exactly: {id, name, summary, image}
+ *  (if no image URL given by API, put in a default image URL)
+*/
 async function getShowsByTerm (searchTerm) {
-  let response = await axios.get('http://api.tvmaze.com/search/shows', {
-    params: { q: searchTerm }
-  });
+  //get request to API, query search term
+  let response = await axios.get('http://api.tvmaze.com/search/shows', {params: { q: searchTerm }});
 
   console.log('response', response);
 
+  //passing an array of episode objs, returns an array of reformatted episode objs
   const episodes = response.data.map(formatEpisode);
 
+  /** takes in an episode obj and returns a formatted obj with only id, name, summary, and img properties */
   function formatEpisode (episode) {
     let id = episode.show.id;
     let name = episode.show.name;
     let summary = episode.show.summary;
-    let image = episode.show.image.original;
+    let placeholderImg = "https://tinyurl.com/tv-missing";
+    let image = episode.show.image === null ? placeholderImg : episode.show.image.original;
 
     return { id, name, summary, image };
   }
@@ -32,11 +33,11 @@ async function getShowsByTerm (searchTerm) {
   return episodes;
 }
 
-/** Given list of shows, create markup for each and to DOM */
-
+/** Given list of shows, create markup for each and append to DOM */
 function populateShows (shows) {
   $showsList.empty();
 
+  //creates show element and populates with id, img, name, and summary
   for (let show of shows) {
     const $show = $(
       `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
@@ -62,9 +63,8 @@ function populateShows (shows) {
 }
 
 /** Handle search form submission: get shows from API and display.
- *    Hide episodes area (that only gets shown if they ask for episodes)
- */
-
+ *  Hide episodes area (that only gets shown if they ask for episodes)
+*/
 async function searchForShowAndDisplay () {
   const term = $('#searchForm-term').val();
   const shows = await getShowsByTerm(term);
