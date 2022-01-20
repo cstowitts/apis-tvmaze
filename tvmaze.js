@@ -3,6 +3,7 @@
 const $showsList = $('#showsList');
 const $episodesArea = $('#episodesArea');
 const $searchForm = $('#searchForm');
+const $episodesList = $('#episodesList');
 const BASE_URL = 'http://api.tvmaze.com';
 
 /** Given a search term, search for tv shows that match that query.
@@ -11,7 +12,7 @@ const BASE_URL = 'http://api.tvmaze.com';
  *  Each show object should contain exactly: {id, name, summary, image}
  *  (if no image URL given by API, put in a default image URL)
  */
-async function getShowsByTerm (searchTerm) {
+async function getShowsByTerm(searchTerm) {
   //get request to API, query search term
   //TODO move api url into global space
   let response = await axios.get(`${BASE_URL}/search/shows`, {
@@ -26,7 +27,7 @@ async function getShowsByTerm (searchTerm) {
   /** takes in an episode obj and returns a formatted obj
    * with only id, name, summary, and img properties
    */
-  function _formatEpisode (episode) {
+  function _formatEpisode(episode) {
     let id = episode.show.id;
     let name = episode.show.name;
     let summary = episode.show.summary;
@@ -43,7 +44,7 @@ async function getShowsByTerm (searchTerm) {
 }
 
 /** Given list of shows, create markup for each and append to DOM */
-function populateShows (shows) {
+function populateShows(shows) {
   $showsList.empty();
 
   //creates show element and populates with id, img, name, and summary
@@ -74,7 +75,7 @@ function populateShows (shows) {
 /** Handle search form submission: get shows from API and display.
  *  Hide episodes area (that only gets shown if they ask for episodes)
  */
-async function searchForShowAndDisplay () {
+async function searchForShowAndDisplay() {
   const term = $('#searchForm-term').val();
   const shows = await getShowsByTerm(term);
 
@@ -90,17 +91,16 @@ $searchForm.on('submit', async function (evt) {
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
-
-async function getEpisodesOfShow (id) {
+async function getEpisodesOfShow(id) {
   const epsResponse = await axios.get(`${BASE_URL}/shows/${id}/episodes`);
 
   //passing an array of episode objs, returns an array of reformatted episode objs
   const episodes = epsResponse.data.map(_formatEpisode);
 
   /** takes in an episode obj and returns a formatted obj
-   * with only id, name, summary, and img properties
+   *  with only id, name, season, and number properties
    */
-  function _formatEpisode (episode) {
+  function _formatEpisode(episode) {
     let id = episode.id;
     let name = episode.name;
     let season = episode.season;
@@ -112,6 +112,42 @@ async function getEpisodesOfShow (id) {
   return episodes;
 }
 
-/** Write a clear docstring for this function... */
+/** accepts an array of episodes objs 
+ * creates li elements for each episode 
+ * appends to episodes list */
+function populateEpisodes(episodes) {
+  $episodesArea.empty();
 
-function populateEpisodes (episodes) {}
+  //creates li listing for each episode, includes season and episode number
+  for (let episode of episodes) {
+    console.log("episodes = ", episodes);
+    
+    const $episode = $(
+      `<li>${episode.name} (${episode.season}, ${episode.number})</li>`
+    );
+
+    $episodesList.append($episode);
+  }
+
+  $episodesArea.css('display', 'auto');
+}
+
+
+
+/** adds click handler to episodes button
+ * grabs show id  
+ * creates list of episodes for a show */
+
+$(".Show-getEpisodes").on('click', async function (evt) {
+  //prevents default refresh behavior
+  evt.preventDefault();
+
+  //grab the id for the show whose episode button was clicked
+  const showId = $(evt.target).closest(".Show").data('show-id');
+
+  //call async getEpisodesOfShow
+  const episodesList = await getEpisodesOfShow(showId);
+
+  //populate episodes list 
+  populateEpisodes(episodesList);
+})
